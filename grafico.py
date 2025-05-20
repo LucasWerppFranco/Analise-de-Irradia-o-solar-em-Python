@@ -2,8 +2,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# Carregar os dados
-df = pd.read_csv('dados_radiacao.csv')
+# Carregar os dados do Excel
+df = pd.read_excel('dados_radiacao.xlsx', engine='openpyxl')
 
 # Estilo dos gráficos
 sns.set(style="whitegrid")
