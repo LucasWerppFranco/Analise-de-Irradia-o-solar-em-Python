@@ -1,47 +1,56 @@
-def bubble_sort_prioridade(dispositivos):
-    n = len(dispositivos)
-    for i in range(n):
-        for j in range(0, n - i - 1):
-            if dispositivos[j]['prioridade'] < dispositivos[j + 1]['prioridade']:
-                dispositivos[j], dispositivos[j + 1] = dispositivos[j + 1], dispositivos[j]
-    return dispositivos
+import pandas as pd
+import numpy as np
 
-def simular_consumo(dispositivos, energia_disponivel):
-    # Ordenar por prioridade (maior para menor)
-    dispositivos_ordenados = bubble_sort_prioridade(dispositivos.copy())
+# Carregar o arquivo Excel
+file_path = 'dados_radiacao.xlsx'  # Ajuste o caminho se necessário
+dados = pd.read_excel(file_path)
 
-    consumo_total = 0
-    ativados = []
-    desligados = []
+# Selecionar duas variáveis para análise univariada
+var1 = dados['Beam Irradiance (W/m2)']
+var2 = dados['Ambient Temperature (C)']
 
-    for d in dispositivos_ordenados:
-        if consumo_total + d['consumo'] <= energia_disponivel:
-            ativados.append(d['nome'])
-            consumo_total += d['consumo']
-        else:
-            desligados.append(d['nome'])
+# Função para calcular as medidas estatísticas
+def analise_univariada(serie):
+    medidas = {}
+    # Medidas de Tendência Central
+    medidas['média'] = serie.mean()
+    medidas['mediana'] = serie.median()
+    medidas['moda'] = serie.mode().values.tolist()
 
-    # Exibir resultados
-    print("=== Simulação de Consumo de Energia ===")
-    print(f"→ Energia disponível: {energia_disponivel} kWh\n")
-    print("Dispositivos ligados (em ordem de prioridade):")
-    for nome in ativados:
-        print(f"✔ {nome}")
-    print("\nDispositivos desligados:")
-    for nome in desligados:
-        print(f"✘ {nome}")
-    print(f"\nConsumo total: {consumo_total:.2f} kWh")
+    # Medidas de Dispersão
+    medidas['amplitude'] = serie.max() - serie.min()
+    medidas['variância'] = serie.var()
+    medidas['desvio padrão'] = serie.std()
+    medidas['coeficiente de variação (%)'] = (serie.std() / serie.mean()) * 100 if serie.mean() != 0 else np.nan
 
+    # Medidas Separatrizes
+    medidas['quartil 1 (Q1)'] = serie.quantile(0.25)
+    medidas['quartil 2 (Q2 - mediana)'] = serie.quantile(0.5)
+    medidas['quartil 3 (Q3)'] = serie.quantile(0.75)
+    medidas['mínimo'] = serie.min()
+    medidas['máximo'] = serie.max()
 
-# Exemplo de uso
-if __name__ == "__main__":
-    dispositivos = [
-        {'nome': 'Geladeira', 'consumo': 1.2, 'prioridade': 5},
-        {'nome': 'Ar Condicionado', 'consumo': 3.5, 'prioridade': 3},
-        {'nome': 'Lâmpadas', 'consumo': 0.6, 'prioridade': 4},
-        {'nome': 'Máquina de Lavar', 'consumo': 2.0, 'prioridade': 2},
-        {'nome': 'TV', 'consumo': 0.8, 'prioridade': 1}
-    ]
+    return medidas
 
-    energia_disponivel = 4.0  # kWh
-    simular_consumo(dispositivos, energia_disponivel)
+# Realizar análises
+analise_var1 = analise_univariada(var1)
+analise_var2 = analise_univariada(var2)
+
+# Exibir resultados
+print("Análise - Beam Irradiance (W/m²):")
+for k, v in analise_var1.items():
+    print(f"{k}: {v}")
+
+print("\nAnálise - Ambient Temperature (°C):")
+for k, v in analise_var2.items():
+    print(f"{k}: {v}")
+
+# Interpretação
+print("\n# A análise da variável 'Beam Irradiance' evidencia que a maioria das observações possui valor igual a zero,")
+print("# refletido na mediana e moda nulas. Contudo, a média está acima de 200 W/m², indicando a presença de valores")
+print("# extremos que elevam esta medida, confirmada também pela ampla dispersão (desvio padrão elevado e coeficiente")
+print("# de variação superior a 100%). A amplitude máxima de 1053 W/m² reforça esta variabilidade. Por outro lado,")
+print("# a variável 'Ambient Temperature' apresenta distribuição mais concentrada, com média e mediana próximas e")
+print("# coeficiente de variação abaixo de 25%, sugerindo estabilidade nos valores ao longo do tempo. A amplitude de")
+print("# cerca de 32 °C, embora expressiva, não compromete a homogeneidade dos dados, como demonstrado pelo baixo")
+print("# desvio padrão.")
